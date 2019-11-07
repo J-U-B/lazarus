@@ -7,7 +7,7 @@ interface
 {$Define GUI}
 
 uses
-  //Classes,
+    //Classes,
   SysUtils, FileUtil,
   {$IFDEF GUI}
   LResources,
@@ -18,23 +18,32 @@ uses
   StdCtrls,
   ExtCtrls,
   Buttons,
+  opsiscripttesthelper_main,
   {$ENDIF GUI}
-  helpermain,
+  //helpermain,
   //VersionInfo,
-  Process,
-  osversioninfo,
+
   {$IFDEF WINDOWS}
   Windows,
-  wispecfolder,
+  helperwispecfolder,
   DSiWin32,
   //winpeimagereader,
   {$ENDIF WINDOWS}
   {$IFDEF UNIX}
   //elfreader,
 
+
   {$ENDIF UNIX}
+  {$IFDEF LINUX}
+  elfreader,
+  lispecfolder,
+  osfunclin,
+
+
+  {$ENDIF LINUX}
   Classes;
   //fileinfo;
+
 
 type
 
@@ -45,22 +54,21 @@ type
     Edit1: TEdit;
     Label1: TLabel;
     Label2: TLabel;
-    Timer1: TTimer;
-    waittimer: TTimer;
     procedure BitBtn1Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
     procedure showwindow(seconds: integer);
   private
-    { private declarations }
+
   public
-    { public declarations }
+
   end;
 
-procedure main;
+
+//procedure main;
 
 var
   Form1: TForm1;
+  (*
   ErrorMsg: string;
   optionlist: TStringList;
   myexitcode: integer;
@@ -72,10 +80,11 @@ var
   mybyte: byte;
   mylog: textfile;
   mydefaultlog: string;
+*)
 
 implementation
 
-
+{$IFDEF WINDOWS}
 function IsElevated: boolean;
 const
   TokenElevation = TTokenInformationClass(20);
@@ -217,9 +226,9 @@ begin
   else
     Result := False;
 end;
+{$ENDIF WINDOWS}
 
-
-
+(*
 procedure WriteHelp;
 var
   filename: string;
@@ -247,15 +256,13 @@ procedure writeTimestamp;
 begin
   writeln(DateTimeToStr(now));
 end;
+*)
 
 procedure TForm1.showwindow(seconds: integer);
 begin
-  //form1 = TForm1.Create(Application);
-  //Application.CreateForm(TForm1, Form1);
   form1.Visible := True;
-  form1.timer1.Interval := seconds * 1000;
-  form1.timer1.Enabled := True;
-  //form1.Show;
+  opsiscripttesthelper_main.timer1.Interval := seconds * 1000;
+  opsiscripttesthelper_main.timer1.Enabled := True;
 end;
 
 (*
@@ -291,18 +298,19 @@ begin
 end;
 *)
 
+(*
 procedure startchild(childsec: integer);
 var
   AProcess: TProcess;
 begin
   AProcess := TProcess.Create(nil);
-  AProcess.CommandLine := '"' + ExtractFilePath(ParamStr(0)) +
-    'helperchild.exe" --wait=2 --showwindow=' + IntToStr(childsec);
-  //AProcess.Options := AProcess.Options + [poWaitOnExit, poUsePipes];
+  AProcess.Executable:= ExtractFilePath(ParamStr(0)) + 'helperchild.exe';
+  AProcess.Parameters.Add('--wait=2');
+  AProcess.Parameters.Add('--showwindow=' + IntToStr(childsec));
   try
     AProcess.Execute;
   except
-    writeln('Error starting: ' + AProcess.CommandLine);
+    writeln('Error starting: ' + AProcess.Executable);
   end;
 end;
 
@@ -353,9 +361,10 @@ begin
     end;
   end;
 
+
   if Application.HasOption('log') then
   begin
-    mydefaultlog := 'c:\opsi.org\tmp\opsiwinsttesthelper.log';
+    mydefaultlog := 'c:\opsi.org\log\opsiwinsttesthelper.log';
     paramvaluestr := Application.GetOptionValue('log');
     try
       Assign(mylog, paramvaluestr);
@@ -374,6 +383,7 @@ begin
         Application.Terminate;
       end;
     end;
+    {$IFDEF WINDOWS}
     GetNetUser('', mystr, dummystr);
     writeln(mylog, 'Running as = ' + mystr);
     if DSiIsAdmin then
@@ -393,6 +403,7 @@ begin
     retrieveFoldersFromWinApi;
     writeln(mylog, 'Appdata is = ' + GetAppDataPath);
     writeln(mylog, 'Desktop is = ' + GetDesktopPath);
+    {$ENDIF WINDOWS}
     writeln(mylog, 'current profile is = ' + GetUserProfilePath);
     closefile(mylog);
   end;
@@ -493,12 +504,12 @@ begin
     halt(myexitcode);
     Application.Terminate;
   end;
+  *)
 
-end;
 
 
 { TForm1 }
-
+(*
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
@@ -506,6 +517,8 @@ begin
   halt(myexitcode);
   Application.Terminate;
 end;
+*)
+
 
 procedure TForm1.FormCreate(Sender: TObject);
 var
@@ -527,14 +540,14 @@ end;
 
 procedure TForm1.BitBtn1Click(Sender: TObject);
 begin
-  Timer1.Enabled := False;
+  opsiscripttesthelper_main. Timer1.Enabled := False;
   form1.Visible := False;
   halt(myexitcode);
   Application.Terminate;
 end;
 
 initialization
-  // {$I helperwin.lrs}
+   {$I helperwin.lrs}
 
 
 

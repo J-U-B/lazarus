@@ -9,6 +9,12 @@ uses
   cthreads,
   {$ENDIF}//{$ENDIF}
   //Interfaces, // this includes the LCL widgetset
+  {$IFDEF LINUX}
+  osfunclin,
+  {$ENDIF}
+  {$IFDEF DARWIN}
+  osfuncmac,
+  {$ENDIF}
   Classes,
   SysUtils,
   CustApp ,
@@ -23,7 +29,9 @@ uses
   inifiles,
   oslog,
   oswebservice,
-  superobject, oslinmount;
+  superobject,
+  OSProcessux,
+  oslinmount;
 
 
 const
@@ -79,31 +87,9 @@ begin
     halt(0);
   end;
 end;
+
 (*
-function divideAtFirst(const partialS, S: string; var part1, part2: string): boolean;
-  (* teilt den String S beim ersten Vorkommen des Teilstrings partialS;
-     liefert true, wenn partialS vorkommt,
-     andernfalls false;
-
-     wenn partialS nicht vorkommt, enthaelt part1 den Gesamtstring, part2 ist leer *)
-
-var
-  i: integer = 0;
-begin
-  i := pos(lowercase(partialS), lowercase(s));
-  if i > 0 then
-  begin
-    part1 := copy(S, 1, i - 1);
-    part2 := copy(S, i + length(partialS), length(S));
-    Result := True;
-  end
-  else
-  begin
-    part1 := s;
-    part2 := '';
-    Result := False;
-  end;
-end;
+moved to osprocessux
 
 function RunCommandAndCaptureOut
   (cmd: string; catchOut: boolean; var outlines: TStringList;
@@ -210,27 +196,9 @@ begin
   end;
 end;
 *)
+
 (*
-function isMounted(mountpoint : string) : boolean;
-var
-  output:string;
-  exename:string;
-  commands:array of string;
-begin
-  result := false;
-  if not RunCommand('/usr/bin/which',['findmnt'],output) then
-   writeln('Could not find mount binary')
-  else
-  begin
-    exename := output;
-    exename := exename.Replace(#10,'');
-    exename := exename.Replace('''','');
-  end;
-  if RunCommand(exename,[mountpoint],output) then
-  begin
-    result := true;
-  end;
-end;
+moved to osfunclin / osfuncmac
 
 function mountSmbShare(mymountpoint, myshare, mydomain, myuser, mypass, myoption: string) : integer;
 var
@@ -308,8 +276,8 @@ begin
   end;
   outlines.Free;
 end;
-
 *)
+
 
 
 function startopsiscript : integer;
@@ -371,7 +339,7 @@ begin
 end;
 
 (*
-procedure transformHex
+  procedure transformHex
    (const hexstring : String;
     var hexarray : bytearray);
 var
@@ -507,6 +475,7 @@ end;
     end;
   end;
 *)
+
 function MyOpsiMethodCall2(const method: string; parameters: array of string) : string;
   var
     omc: TOpsiMethodCall;
@@ -610,7 +579,12 @@ begin
   myuser := 'pcpatch';
   mydomain := '';
   myshare := 'opsi_depot';
+  {$IFDEF LINUX}
   mymountpoint := '/media/opsi_depot';
+  {$ENDIF}
+  {$IFDEF DARWIN}
+  mymountpoint := '/Network/opsi_depot';
+  {$ENDIF}
   nogui := false;
   FileVerInfo:=TFileVersionInfo.Create(nil);
   try
@@ -720,7 +694,7 @@ begin
         end;
       until isMounted(mymountpoint) or (mounttry > 12);
       *)
-      mount_depotshare(mymountpoint, myhostkey);
+      mount_depotshare(mymountpoint, myhostkey,myclientId);
       if not isMounted(mymountpoint) then
          LogDatei.log('Failed to mount '+myshare+' to '+mymountpoint+' - abort!',LLCritical)
       else
